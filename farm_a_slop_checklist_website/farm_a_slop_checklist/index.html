@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Farm a Slop — Dev Checklist</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#131b2e;--panel2:#1a2540;--line:#2a3858;--text:#f3f6ff;--muted:#aab6d3;--accent:#91f2c2;--accent2:#a4b8ff;--danger:#ff9caa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1a2b45 0%,var(--bg) 55%);color:var(--text);font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:940px;margin:auto;padding:28px 16px 60px}.hero{padding:28px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(135deg,#172842,#11182a);box-shadow:0 20px 60px #0004}
+.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{font-size:clamp(2rem,6vw,3.3rem);line-height:1.08;margin:8px 0 10px;letter-spacing:-.04em}.sub{color:var(--muted);margin:0;max-width:620px}
+.progressline{height:10px;background:#293653;border-radius:99px;overflow:hidden;margin:20px 0 8px}.progressfill{height:100%;width:0;background:linear-gradient(90deg,#64d9a6,#b9f59a);transition:width .2s}
+.progressmeta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:.9rem}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+button,.button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:12px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+button:hover,.button:hover{filter:brightness(1.14)}button.primary{background:var(--accent);border-color:var(--accent);color:#0b1b18}button.danger{color:var(--danger)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.filters button.active{background:var(--accent2);border-color:var(--accent2);color:#10172b}
+.category{margin:14px 0;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#111a2cdd}.cathead{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;background:transparent;border:0;border-radius:0;padding:17px 18px}.catname{font-weight:800;font-size:1.04rem}.catcount{display:block;color:var(--muted);font-size:.83rem;font-weight:500;margin-top:3px}.chevron{font-size:1.2rem;color:var(--muted)}.items{padding:4px 16px 14px;border-top:1px solid var(--line)}
+.task{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding:13px 2px;border-bottom:1px solid #26324a}.task:last-child{border-bottom:0}.task input[type=checkbox]{width:19px;height:19px;margin:3px 0 0;accent-color:#79e4b0;cursor:pointer}.task label{cursor:pointer;overflow-wrap:anywhere}.task.done label{text-decoration:line-through;color:#8290ad}.assignment{margin-top:8px;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.82rem}.assignment select{background:#0d1526;border:1px solid var(--line);border-radius:8px;padding:6px 9px;color:var(--text);font:inherit}
+.notes{margin-top:22px;border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:18px}.notes h2{margin:0 0 8px;font-size:1.15rem}textarea{width:100%;min-height:95px;resize:vertical;background:#0c1425;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--text);font:inherit}
+.foot{color:var(--muted);font-size:.83rem;margin:16px 2px}.empty{color:var(--muted);text-align:center;padding:26px}
+@media(max-width:540px){main{padding:14px 10px 36px}.hero{padding:20px}.toolbar button{flex:1}.assignment{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+  <div class="eyebrow">Game development • shared task plan</div>
+  <h1>Farm a Slop<br>Dev Checklist</h1>
+  <p class="sub">A task tracker for you and your development partner. Assign tasks, mark them complete, and export your progress to share.</p>
+  <div class="progressline" role="progressbar" aria-label="Checklist progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressbar"><div class="progressfill" id="progressfill"></div></div>
+  <div class="progressmeta"><span id="progresscount">0 / 29 completed</span><strong id="progresspercent">0%</strong></div>
+  <div class="toolbar">
+    <button class="primary" id="exportBtn">↗ Export & share progress</button>
+    <button id="expandBtn">Expand all</button>
+    <button id="copyLinkBtn">Copy page link</button>
+    <button class="danger" id="resetBtn">Reset checklist</button>
+  </div>
+</section>
+<div class="filters" aria-label="Filter tasks">
+  <button class="active" data-filter="all">All tasks</button>
+  <button data-filter="remaining">Remaining</button>
+  <button data-filter="completed">Completed</button>
+</div>
+<div id="categories"></div>
+<section class="notes">
+  <h2>Extra notes for you and your friend</h2>
+  <p class="sub" style="margin-bottom:12px">Add priorities, decisions, or who is handling what. Notes are saved in this browser.</p>
+  <textarea id="notes" placeholder="Example: I'll handle UI; my friend will work on brainrot models..."></textarea>
+</section>
+<p class="foot">Important: GitHub Pages hosts this website, but it does not automatically sync checkmarks between different people or devices. Use “Export & share progress” to download a progress file and send it to your friend, or use a shared online database if you need live syncing. Your own progress is saved in this browser.</p>
+</main>
+<script>
+const tasks = [
+["create better UI because it looks plain right now","UI & polish"],
+["add gamepasses and robux options","UI & polish"],
+["revamp the brainrots to look higher quality and better animations","Brainrots & VFX"],
+["add more server events/mutations that are high quality with good vfx","Brainrots & VFX"],
+["create better game progression so you cant complete the game super faster","Progression & gameplay"],
+["make stealing mechanic work and also add more base upgrades","Progression & gameplay"],
+["make the buy egg option useful","Progression & gameplay"],
+["fix the brainrots getting stuck in the conveyor belt","Progression & gameplay"],
+["fix up the zones by making it feel more alive and also adding someone ambient light and cool shadows or something","World & content"],
+["make way more brainrots because there is only like 5 a zone","Brainrots & VFX"],
+["lower spawn chances for rarer brainrots","Progression & gameplay"],
+["make the rarer brainrots give more money and also make them more expensive","Progression & gameplay"],
+["polish anything that looks unfinished","UI & polish"],
+["create thumbnail for the game","UI & polish"],
+["make cutscenes for when you unlock a new zone","World & content"],
+["make the alert on the top of the screen when someone gets a brainrot only for secrets.","UI & polish"],
+["design the portals to look way better because all it is is just coloring inside an outline.","World & content"],
+["have the movement scale way higher because it caps at something very slow","Progression & gameplay"],
+["add a teleport to base option","Quality of life"],
+["add a equip best option","Quality of life"],
+["have a multi sell option","Quality of life"],
+["add some QoL features","Quality of life"],
+["create more zones for more endgame progression possibly","World & content"],
+["add abilities or stuff to help steal from others","Progression & gameplay"],
+["revamp the way the currency looks like because it looks cheap","UI & polish"],
+["maybe instead of buying speed create a treadmill??","Progression & gameplay"],
+["add a cool new mechanic for this game that separates it from other steal a brainrot clones???","Progression & gameplay"],
+["make it says the $/s above the brainrots","Brainrots & VFX"],
+["use differents fonts for text instead of the basic font","UI & polish"],
+["make the tutorial way better instead of just having little text in the corner","World & content"]
+];
+const groups = ["UI & polish","Brainrots & VFX","Progression & gameplay","World & content","Quality of life"];
+const storageKey="farm-a-slop-checklist-v1";
+let state={completed:{},owners:{},notes:"",filter:"all",collapsed:{}};
+function load(){try{const s=JSON.parse(localStorage.getItem(storageKey)||"{}");state={...state,...s};}catch(e){}}
+function save(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function render(){
+ const root=document.getElementById("categories");root.innerHTML="";
+ let visible=0;
+ groups.forEach((group,gi)=>{
+   const list=tasks.map((t,i)=>({...t,index:i})).filter(t=>t[1]===group).filter(t=>state.filter==="all"||(state.filter==="completed"?state.completed[t.index]:!state.completed[t.index]));
+   if(!list.length)return;visible+=list.length;
+   const total=tasks.filter(t=>t[1]===group).length,complete=tasks.filter((t,i)=>t[1]===group&&state.completed[i]).length;
+   const section=document.createElement("section");section.className="category";
+   section.innerHTML=`<button class="cathead" aria-expanded="${!state.collapsed[group]}"><span><span class="catname">${esc(group)}</span><span class="catcount">${complete} / ${total} completed</span></span><span class="chevron">${state.collapsed[group]?"＋":"−"}</span></button>`;
+   const head=section.querySelector(".cathead");head.addEventListener("click",()=>{state.collapsed[group]=!state.collapsed[group];save();render();});
+   if(!state.collapsed[group]){
+    const items=document.createElement("div");items.className="items";
+    list.forEach(t=>{
+      const row=document.createElement("div");row.className="task"+(state.completed[t.index]?" done":"");
+      row.innerHTML=`<input type="checkbox" id="task-${t.index}" ${state.completed[t.index]?"checked":""}><div><label for="task-${t.index}">${esc(t[0])}</label><div class="assignment"><span>Assigned to:</span><select aria-label="Assign task"><option ${(!state.owners[t.index]||state.owners[t.index]==="Unassigned")?"selected":""}>Unassigned</option><option ${state.owners[t.index]==="Me"?"selected":""}>Me</option><option ${state.owners[t.index]==="Friend"?"selected":""}>Friend</option><option ${state.owners[t.index]==="Both"?"selected":""}>Both</option></select></div></div>`;
+      const cb=row.querySelector("input");cb.addEventListener("change",()=>{state.completed[t.index]=cb.checked;save();render();});
+      const sel=row.querySelector("select");sel.addEventListener("change",()=>{state.owners[t.index]=sel.value;save();});
+      items.appendChild(row);
+    });section.appendChild(items);
+   }
+   root.appendChild(section);
+ });
+ if(!visible)root.innerHTML='<div class="empty">No tasks in this filter.</div>';
+ const n=Object.values(state.completed).filter(Boolean).length,p=Math.round(n/tasks.length*100);
+ document.getElementById("progresscount").textContent=`${n} / ${tasks.length} completed`;
+ document.getElementById("progresspercent").textContent=`${p}%`;
+ document.getElementById("progressfill").style.width=p+"%";
+ document.getElementById("progressbar").setAttribute("aria-valuenow",p);
+ document.getElementById("notes").value=state.notes||"";
+ document.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===state.filter));
+}
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.filter;render();}));
+document.getElementById("notes").addEventListener("input",e=>{state.notes=e.target.value;save();});
+document.getElementById("expandBtn").addEventListener("click",()=>{const shouldCollapse=groups.every(g=>state.collapsed[g]);groups.forEach(g=>state.collapsed[g]=!shouldCollapse);document.getElementById("expandBtn").textContent=shouldCollapse?"Collapse all":"Expand all";save();render();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset all checkmarks, assignments, and notes in this browser?")){state={completed:{},owners:{},notes:"",filter:"all",collapsed:{}};save();render();}});
+document.getElementById("copyLinkBtn").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(location.href);alert("Page link copied! Share it with your friend. Checkmarks are not synced between devices.");}catch(e){prompt("Copy this page link:",location.href);}});
+document.getElementById("exportBtn").addEventListener("click",()=>{
+ const data={title:"Farm a Slop — Dev Checklist",exportedAt:new Date().toISOString(),tasks:tasks.map((t,i)=>({task:t[0],category:t[1],completed:!!state.completed[i],assignedTo:state.owners[i]||"Unassigned"})),notes:state.notes||""};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="farm-a-slop-checklist-progress.json";a.click();URL.revokeObjectURL(url);
+ alert("Progress exported. Send the downloaded JSON file to your friend so they can see the current checklist status.");
+});
+load();render();
+</script>
+</body>
+</html>
